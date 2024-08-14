@@ -5,3 +5,5 @@ export const AUTOFILL_SLOT_NAME = 'autofill'
 
 /** Used by `provide` and `inject` */
 export const AUTOFILL_SLOT = 'autofillSlot'
+
+export const FIELD_MODEL = 'fieldModel'

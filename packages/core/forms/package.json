@@ -64,7 +64,8 @@
     "@kong/design-tokens": "1.17.2",
     "@kong/kongponents": "9.4.1",
     "@types/lodash-es": "^4.17.12",
-    "pug": "^3.0.3"
+    "pug": "^3.0.3",
+    "vue-router": "^4.4.0"
   },
   "distSizeChecker": {
     "errorLimit": "1.2MB"
