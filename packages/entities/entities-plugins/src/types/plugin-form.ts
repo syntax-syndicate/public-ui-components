@@ -19,6 +19,7 @@ import type { SAMLSchema } from './plugins/saml'
 import type { OasValidationSchema } from './plugins/oas-validation'
 import type { UpstreamOauthSchema } from './plugins/upstream-oauth'
 import type { InjectionProtectionSchema } from './plugins/injection-protection'
+import type { AxiosRequestConfig, AxiosResponse } from 'axios'
 
 export interface BasePluginSelectConfig {
   /** A function that returns the route for creating a plugin */
@@ -215,4 +216,9 @@ export interface CustomSchemas {
   'oas-validation': OasValidationSchema
   'upstream-oauth': UpstreamOauthSchema
   'injection-protection': InjectionProtectionSchema
+}
+
+export interface FormsApi {
+  getOne: (entityType: string, entityId: string) => Promise<AxiosResponse>
+  getAll: (entityType: string, params: AxiosRequestConfig) => Promise<AxiosResponse>
 }
