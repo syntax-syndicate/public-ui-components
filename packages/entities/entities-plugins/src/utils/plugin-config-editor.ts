@@ -1,5 +1,5 @@
-import type * as MonacoEditorType from 'monaco-editor'
-import type { JSONSchema } from '@kong/vscode-json-languageservice'
+import type { ASTNode, JSONSchema, PropertyASTNode } from '@kong/vscode-json-languageservice'
+import type * as Monaco from 'monaco-editor'
 import {
   isArrayLikeField,
   isBooleanField,
@@ -19,7 +19,7 @@ import {
 } from '../types'
 
 export const setupMonaco = async () => {
-  const [EditorWorker, JsonWorker] = await Promise.all([
+  const [EditorWorker, JSONWorker] = await Promise.all([
     import('@kong/monaco-editor/esm/vs/editor/editor.worker?worker').then(module => module.default),
     import('@kong/monaco-editor/esm/vs/language/json/json.worker?worker').then(module => module.default),
   ])
@@ -27,13 +27,13 @@ export const setupMonaco = async () => {
   window.MonacoEnvironment = {
     getWorker(_: any, label: string) {
       if (label === 'json') {
-        return new JsonWorker()
+        return new JSONWorker()
       }
       return new EditorWorker()
     },
   }
 
-  return await import('monaco-editor') as typeof MonacoEditorType
+  return await import('monaco-editor') as typeof Monaco
 }
 
 const luaPatternToRePattern = (luaPattern: string) => {
@@ -262,6 +262,7 @@ export const buildAnySchema = (
 
   const commons: ExtendedJSONSchema = {
     // detail: `${fieldSchema.required ? '* ' : ''}${fieldSchema.type}`,
+    _fieldSchema: fieldSchema,
     default: fieldSchema.default,
     markdownDescription: [
       ...(fieldSchema.required ? ['_Required_'] : []),
@@ -378,3 +379,14 @@ export const prepareModel = (schema: JSONSchema) => {
   return JSON.stringify(model, null, 2).replaceAll(`"${requiredValuePlaceholder}"`, '/*required*/')
 }
 
+export const obtainPropertyChain = (node?: ASTNode, chain: PropertyASTNode[] = []) => {
+  if (node) {
+    if (node.type === 'property') {
+      chain.unshift(node)
+    }
+    if (node.parent) {
+      obtainPropertyChain(node.parent, chain)
+    }
+  }
+  return chain
+}

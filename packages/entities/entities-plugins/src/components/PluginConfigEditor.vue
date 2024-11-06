@@ -1,6 +1,9 @@
 <template>
   <div class="plugin-config-editor">
-    <div class="plugin-config-editor-toolbar">
+    <div
+      v-if="false"
+      class="plugin-config-editor-toolbar"
+    >
       <KSegmentedControl
         v-model="language"
         class="language-control"
@@ -14,7 +17,12 @@
         class="plugin-config-editor-editor"
       />
 
-      <div class="plugin-config-editor-panel" />
+      <div class="plugin-config-editor-panel">
+        <PropertyPanel
+          :node="focusedNode"
+          :schema="schema"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -29,12 +37,14 @@ export interface PluginConfigEditorProps {
 
 <script setup lang="ts">
 import { FORMS_API_KEY } from '@kong-ui-public/forms'
-import type { StaticPluginMetaData } from 'src/definitions/metadata'
+import type { ASTNode } from '@kong/vscode-json-languageservice'
 import type * as Monaco from 'monaco-editor'
+import type { StaticPluginMetaData } from 'src/definitions/metadata'
 import { inject, onBeforeUnmount, onMounted, ref, toRefs, watch } from 'vue'
 import composables from '../composables'
 import { type EditorLanguage, type FormsApi, type RecordFieldSchema } from '../types'
 import { isValidUuid, setupMonaco } from '../utils'
+import PropertyPanel from './config-editor/PropertyPanel.vue'
 
 const languageOptions = [
   { label: 'JSON', value: 'json' },
@@ -52,6 +62,8 @@ let editorDecorations: string[] = []
 const editorRef = ref<HTMLElement | null>(null)
 const { name, metadata, rawGatewaySchema } = toRefs(props)
 const language = ref<EditorLanguage>('json')
+
+const focusedNode = ref<ASTNode | undefined>(undefined)
 
 const { model, schema, uri, textDocument, languageSpecificDocument, onDidChangeModelContent } =
   composables.usePluginConfigEditor(monaco, name, metadata, rawGatewaySchema, language)
@@ -209,6 +221,7 @@ onMounted(async () => {
       character: e.position.column - 1,
     })
     const node = languageSpecificDocument.value.getNodeFromOffset(offset)
+    focusedNode.value = node
     if (node?.type === 'string' && node.parent?.type === 'property' && node.parent.keyNode.value === 'service') {
       const suggestController = editor.getContribution('editor.contrib.suggestController') as any
       if (suggestController) {
@@ -222,44 +235,45 @@ onMounted(async () => {
     monaco.editor.onDidChangeMarkers((uris) => {
       const matchingUri = uris.find((u) => u.toString() === uri.value.toString())
 
-      if (matchingUri) {
-        const decorations: Monaco.editor.IModelDeltaDecoration[] = []
-        const markers = monaco.editor.getModelMarkers({
-          resource: uri.value,
-        })
+      if (!matchingUri) {
+        return
+      }
+      const decorations: Monaco.editor.IModelDeltaDecoration[] = []
+      const markers = monaco.editor.getModelMarkers({
+        resource: uri.value,
+      })
 
-        for (const marker of markers) {
-          const node = languageSpecificDocument.value.getNodeFromOffset(
-            textDocument.value.offsetAt({ line: marker.startLineNumber - 1, character: marker.startColumn - 1 }),
-          )
-          if (node !== undefined) {
-            const start = textDocument.value.positionAt(node.offset)
-            const end = textDocument.value.positionAt(node.offset + node.length)
-            decorations.push({
-              range: {
-                startLineNumber: start.line + 1,
-                startColumn: 1,
-                endLineNumber: end.line + 1,
-                endColumn: 1,
-              },
-              options: {
-                isWholeLine: true,
-                linesDecorationsClassName: 'line-error-decorator',
-              },
-            })
-            decorations.push({
-              range: {
-                startLineNumber: marker.startLineNumber,
-                startColumn: 1,
-                endLineNumber: marker.endLineNumber,
-                endColumn: 1,
-              },
-              options: {
-                isWholeLine: true,
-                className: 'line-error',
-              },
-            })
-          }
+      for (const marker of markers) {
+        const node = languageSpecificDocument.value.getNodeFromOffset(
+          textDocument.value.offsetAt({ line: marker.startLineNumber - 1, character: marker.startColumn - 1 }),
+        )
+        if (node !== undefined) {
+          const start = textDocument.value.positionAt(node.offset)
+          const end = textDocument.value.positionAt(node.offset + node.length)
+          decorations.push({
+            range: {
+              startLineNumber: start.line + 1,
+              startColumn: 1,
+              endLineNumber: end.line + 1,
+              endColumn: 1,
+            },
+            options: {
+              isWholeLine: true,
+              linesDecorationsClassName: 'line-error-decorator',
+            },
+          })
+          decorations.push({
+            range: {
+              startLineNumber: marker.startLineNumber,
+              startColumn: 1,
+              endLineNumber: marker.endLineNumber,
+              endColumn: 1,
+            },
+            options: {
+              isWholeLine: true,
+              className: 'line-error',
+            },
+          })
         }
 
         editorDecorations = editor.getModel()?.deltaDecorations(editorDecorations, decorations) ?? []
@@ -460,14 +474,14 @@ onMounted(async () => {
 .plugin-config-editor {
   display: flex;
   flex-direction: column;
-  border: 2px solid rgba(0, 0, 0, 0.1);
-  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  // border-radius: 6px;
 
   .plugin-config-editor-toolbar {
     display: flex;
     flex-direction: row;
     justify-content: flex-end;
-    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
     padding: 8px;
 
     .language-control {
@@ -482,7 +496,7 @@ onMounted(async () => {
 
     .plugin-config-editor-editor {
       height: 500px;
-      width: 100%;
+      flex-grow: 1;
 
       :deep(.line-error-decorator) {
         background-color: rgb(255, 220, 220);
@@ -497,7 +511,8 @@ onMounted(async () => {
 
     .plugin-config-editor-panel {
       width: 300px;
-      border-left: 2px solid rgba(0, 0, 0, 0.1);
+      border-left: 1px solid rgba(0, 0, 0, 0.1);
+      padding: $kui-space-60;
 
       .suggested-properties-title {
         padding: 8px;

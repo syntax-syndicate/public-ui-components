@@ -40,8 +40,6 @@
     "@kong/design-tokens": "1.17.2",
     "@kong/icons": "^1.18.2",
     "@kong/kongponents": "9.14.8",
-    "@kong/monaco-yaml": "5.2.2-patch.3",
-    "@kong/vscode-json-languageservice": "5.4.1-patch.1",
     "@kong/monaco-editor": "0.52.0-patch.5",
     "@kong/monaco-yaml": "5.2.2-patch.3",
     "@kong/vscode-json-languageservice": "5.4.1-patch.4",
@@ -49,8 +47,8 @@
     "lodash-es": "^4.17.21",
     "monaco-editor": "0.52.0",
     "vite-plugin-monaco-editor": "^1.1.0",
-    "vue": "^3.5.12",
     "vue-router": "^4.4.5",
+    "vue": "^3.5.12",
     "yaml": "^2.5.1"
   },
   "scripts": {
