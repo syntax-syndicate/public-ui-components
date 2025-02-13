@@ -82,6 +82,7 @@
     "@kong-ui-public/core": "workspace:^",
     "@kong-ui-public/entities-shared": "workspace:^",
     "ajv": "^8.17.1",
-    "gridstack": "^11.3.0"
+    "gridstack": "^11.3.0",
+    "p-queue": "^8.1.0"
   }
 }
